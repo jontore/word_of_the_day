@@ -5,6 +5,20 @@
 #include <LiquidCrystal_I2C.h>
 
 
+#define DEBUG
+
+#define LIGHTPIN 10
+
+#define SSID "babbel-hackday"
+#define PASSWORD "hackday_2015"
+
+#define DOMAIN "freegeoip.net"
+#define PATH "/json/"
+#define COUNTRY_CODE "CH"
+#ifdef DEBUG
+  SoftwareSerial debugPort(2, 3); // RX, TX
+#endif
+
 #define I2C_ADDR      0x27 // I2C address of PCF8574A
 #define BACKLIGHT_PIN 3
 #define En_pin        2
@@ -16,18 +30,6 @@
 #define D7_pin        7
 
 LiquidCrystal_I2C lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin, BACKLIGHT_PIN, POSITIVE);
-
-#define DEBUG
-
-#define SSID "babbel-hackday"
-#define PASSWORD "hackday_2015"
-
-#define DOMAIN "freegeoip.net"
-#define PATH "/json/"
-#define COUNTRY_CODE "CH"
-#ifdef DEBUG
-  SoftwareSerial debugPort(2, 3); // RX, TX
-#endif
 
 #ifdef DEBUG
 ESP esp(&Serial, &debugPort, 4);
@@ -58,6 +60,7 @@ void wifiCb(void* response)
   }
 }
 
+
 void setup() {
   Serial.begin(19200);
  
@@ -70,42 +73,40 @@ void setup() {
   lcd.home();
   lcd.print("Hello");
 
-  delay(500);
+  pinMode(LIGHTPIN, OUTPUT);
   esp.enable();
   delay(500);
   esp.reset();
   delay(500);
   while (!esp.ready());
 
-  #ifdef DEBUG
-    debugPort.println("ARDUINO: setup rest client");
-  #endif
+  delay(500);
   if (!rest.begin(DOMAIN)) {
     #ifdef DEBUG
-      debugPort.println("ARDUINO: failed to setup rest client");
+      debugPort.println("fail");
     #endif
     while (1);
   }
 
-  /*setup wifi*/
+  delay(500);
   esp.wifiCb.attach(&wifiCb);
   esp.wifiConnect(SSID, PASSWORD);
   #ifdef DEBUG
-    debugPort.println("ARDUINO: system started");
+    debugPort.println("started");
   #endif
 }
 
-char response[5] = "";
+char response[50] = "";
 void loop() {
-  lcd.print("test");
   esp.process();
   if (wifiConnected) {
     rest.get(PATH);
     if (rest.getResponse(response, 50) == HTTP_STATUS_OK) {
       #ifdef DEBUG
-        lcd.print("World");
+        lcd.print(response);
+        debugPort.println("get");
       #endif
     }
-    delay(1000);
+    delay(10000);
   }
 }
