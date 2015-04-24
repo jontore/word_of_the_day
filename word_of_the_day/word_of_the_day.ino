@@ -5,14 +5,16 @@
 #include <LiquidCrystal_I2C.h>
 
 
-#define DEBUG 1
+#define DEBUG
+
+#define LIGHTPIN 10
 
 #define SSID "babbel-hackday"
 #define PASSWORD "hackday_2015"
 
-#define DOMAIN "freegeoip.net"
-#define PATH "/json/"
-#define COUNTRY_CODE "CH"
+#define DOMAIN "192.168.88.115"
+#define PORT 3000 
+#define PATH "/"
 #ifdef DEBUG
   SoftwareSerial debugPort(2, 3); // RX, TX
 #endif
@@ -73,8 +75,9 @@ void setup() {
   lcd.home();
   lcd.print("Hello");
 
+  pinMode(LIGHTPIN, OUTPUT);
   pinMode(buttonPin, INPUT);
-    
+  
   esp.enable();
   delay(500);
   esp.reset();
@@ -82,9 +85,9 @@ void setup() {
   while (!esp.ready());
 
   delay(500);
-  if (!rest.begin(DOMAIN)) {
+  if (!rest.begin(DOMAIN, PORT, false)) {
     #ifdef DEBUG
-      debugPort.println("fail");
+      debugPort.println("f");
     #endif
     while (1);
   }
@@ -93,26 +96,31 @@ void setup() {
   esp.wifiCb.attach(&wifiCb);
   esp.wifiConnect(SSID, PASSWORD);
   #ifdef DEBUG
-    debugPort.println("started");
+    debugPort.println("s");
   #endif
 }
 
 char response[20] = "";
 void loop() {
-  buttonState = digitalRead(buttonPin);
   esp.process();
   if (wifiConnected) {
-    debugPort.println("g");
     rest.get(PATH);
     if (rest.getResponse(response, 20) == HTTP_STATUS_OK) {
       #ifdef DEBUG
+        lcd.clear();
         lcd.print(response);
+        debugPort.println("get");
       #endif
     }
+    
+    delay(2000);
+    
+    for (int positionCounter = 0; positionCounter < 16; positionCounter++) {
+      // scroll one position left:
+      lcd.scrollDisplayLeft(); 
+      // wait a bit:
+      delay(400);
+    }
     delay(10000);
-  } else {
-    delay(500);
-    debugPort.println("w");
-    debugPort.println(buttonState);
   }
 }
