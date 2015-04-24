@@ -5,9 +5,7 @@
 #include <LiquidCrystal_I2C.h>
 
 
-#define DEBUG
-
-#define LIGHTPIN 10
+#define DEBUG 1
 
 #define SSID "babbel-hackday"
 #define PASSWORD "hackday_2015"
@@ -75,7 +73,6 @@ void setup() {
   lcd.home();
   lcd.print("Hello");
 
-  pinMode(LIGHTPIN, OUTPUT);
   pinMode(buttonPin, INPUT);
     
   esp.enable();
@@ -100,23 +97,22 @@ void setup() {
   #endif
 }
 
-char response[50] = "";
+char response[20] = "";
 void loop() {
   buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH) {
-    esp.process();
-    if (wifiConnected) {
-      rest.get(PATH);
-      if (rest.getResponse(response, 50) == HTTP_STATUS_OK) {
-        #ifdef DEBUG
-          lcd.print(response);
-          debugPort.println("get");
-        #endif
-      }
-      delay(10000);
+  esp.process();
+  if (wifiConnected) {
+    debugPort.println("g");
+    rest.get(PATH);
+    if (rest.getResponse(response, 20) == HTTP_STATUS_OK) {
+      #ifdef DEBUG
+        lcd.print(response);
+      #endif
     }
+    delay(10000);
   } else {
     delay(500);
     debugPort.println("w");
+    debugPort.println(buttonState);
   }
 }
