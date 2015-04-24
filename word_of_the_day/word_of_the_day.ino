@@ -40,6 +40,8 @@ ESP esp(&Serial, 4);
 REST rest(&esp);
 
 boolean wifiConnected = false;
+const int buttonPin = 9;
+int buttonState = 0;  
 
 void wifiCb(void* response)
 {
@@ -74,6 +76,8 @@ void setup() {
   lcd.print("Hello");
 
   pinMode(LIGHTPIN, OUTPUT);
+  pinMode(buttonPin, INPUT);
+    
   esp.enable();
   delay(500);
   esp.reset();
@@ -98,15 +102,21 @@ void setup() {
 
 char response[50] = "";
 void loop() {
-  esp.process();
-  if (wifiConnected) {
-    rest.get(PATH);
-    if (rest.getResponse(response, 50) == HTTP_STATUS_OK) {
-      #ifdef DEBUG
-        lcd.print(response);
-        debugPort.println("get");
-      #endif
+  buttonState = digitalRead(buttonPin);
+  if (buttonState == HIGH) {
+    esp.process();
+    if (wifiConnected) {
+      rest.get(PATH);
+      if (rest.getResponse(response, 50) == HTTP_STATUS_OK) {
+        #ifdef DEBUG
+          lcd.print(response);
+          debugPort.println("get");
+        #endif
+      }
+      delay(10000);
     }
-    delay(10000);
+  } else {
+    delay(500);
+    debugPort.println("w");
   }
 }
